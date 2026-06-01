@@ -243,49 +243,63 @@ export default function App() {
   if (!loaded) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui", color: C.muted }}>Chargement… 🍽️</div>;
 
   // ── Écran de connexion ───────────────────────────────────────────────────
-  if (screen === "login") return (
-    <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
-      <div style={{ background: "#1A1A1A", borderRadius: 16, padding: 26, width: 310, border: "1px solid #E8500A30" }}>
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <svg width="80" height="88" viewBox="0 0 200 220" style={{ marginBottom: 6 }}>
-            <polygon points="100,8 192,110 8,110" fill="none" stroke="#E8500A" strokeWidth="3" />
-            <g fill="none" stroke="#E8500A" strokeWidth="2.2">
-              <ellipse cx="105" cy="72" rx="38" ry="22" />
-              <path d="M68,82 Q60,95 62,100" /><path d="M82,90 Q78,104 80,108" />
-              <path d="M128,90 Q132,104 130,108" /><path d="M142,82 Q150,95 148,100" />
-              <path d="M143,65 Q155,58 152,75" />
-            </g>
-          </svg>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#E8500A", letterSpacing: 2 }}>LE MONTMORENCY</div>
-          <div style={{ fontSize: 11, color: "#ffffff50", marginTop: 2 }}>bistro ivoirien · Abidjan</div>
-          <div style={{ width: 60, height: 1, background: "#E8500A50", margin: "10px auto 6px" }} />
-          <div style={{ fontSize: 12, color: "#ffffff60" }}>Connectez-vous</div>
+  if (screen === "login") {
+    const handlePin = (k) => {
+      if (k === "⌫") setPinInput(p => p.slice(0, -1));
+      else if (k === "✓") handleLogin();
+      else if (pinInput.length < 4) setPinInput(p => p + String(k));
+    };
+
+    return (
+      <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}
+        onKeyDown={(e) => e.preventDefault()}
+      >
+        <div style={{ background: "#1A1A1A", borderRadius: 16, padding: 26, width: 310, border: "1px solid #E8500A30" }}>
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <svg width="80" height="88" viewBox="0 0 200 220" style={{ marginBottom: 6 }}>
+              <polygon points="100,8 192,110 8,110" fill="none" stroke="#E8500A" strokeWidth="3" />
+              <g fill="none" stroke="#E8500A" strokeWidth="2.2">
+                <ellipse cx="105" cy="72" rx="38" ry="22" />
+                <path d="M68,82 Q60,95 62,100" /><path d="M82,90 Q78,104 80,108" />
+                <path d="M128,90 Q132,104 130,108" /><path d="M142,82 Q150,95 148,100" />
+                <path d="M143,65 Q155,58 152,75" />
+              </g>
+            </svg>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#E8500A", letterSpacing: 2 }}>LE MONTMORENCY</div>
+            <div style={{ fontSize: 11, color: "#ffffff50", marginTop: 2 }}>bistro ivoirien · Abidjan</div>
+            <div style={{ width: 60, height: 1, background: "#E8500A50", margin: "10px auto 6px" }} />
+            <div style={{ fontSize: 12, color: "#ffffff60" }}>Connectez-vous</div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            {staff.map(m => (
+              <div key={m.id}
+                onClick={() => { setSelectedStaff(m.id); setPinInput(""); setPinError(""); }}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8, marginBottom: 6, cursor: "pointer", border: `1.5px solid ${selectedStaff === m.id ? "#E8500A" : "#333"}`, background: selectedStaff === m.id ? "#E8500A15" : "#222" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: m.role === "manager" ? "#E8500A25" : "#05966920", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: m.role === "manager" ? "#E8500A" : C.success }}>{m.name[0]}</div>
+                <div><div style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>{m.name}</div><div style={{ fontSize: 11, color: "#ffffff50" }}>{m.role}</div></div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 8 }}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "✓"].map(k => (
+              <button
+                key={k}
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handlePin(k);
+                }}
+                style={{ padding: "11px 0", borderRadius: 8, border: "1px solid #333", background: k === "✓" ? "#E8500A" : "#222", color: "#fff", fontSize: 16, cursor: "pointer", fontWeight: 500, WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
+              >{k}</button>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", letterSpacing: 8, fontSize: 20, marginBottom: 4, color: "#E8500A" }}>{"●".repeat(pinInput.length)}{"○".repeat(4 - pinInput.length)}</div>
+          {pinError && <div style={{ color: C.danger, fontSize: 12, textAlign: "center" }}>{pinError}</div>}
         </div>
-        <div style={{ marginBottom: 12 }}>
-          {staff.map(m => (
-            <div key={m.id} onClick={() => { setSelectedStaff(m.id); setPinInput(""); setPinError(""); }}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8, marginBottom: 6, cursor: "pointer", border: `1.5px solid ${selectedStaff === m.id ? "#E8500A" : "#333"}`, background: selectedStaff === m.id ? "#E8500A15" : "#222" }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: m.role === "manager" ? "#E8500A25" : "#05966920", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: m.role === "manager" ? "#E8500A" : C.success }}>{m.name[0]}</div>
-              <div><div style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>{m.name}</div><div style={{ fontSize: 11, color: "#ffffff50" }}>{m.role}</div></div>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 8 }}>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "✓"].map(k => (
-            <button key={k} type="button" onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (k === "⌫") setPinInput(p => p.slice(0, -1));
-              else if (k === "✓") handleLogin();
-              else if (pinInput.length < 4) setPinInput(p => p + String(k));
-            }} style={{ padding: "11px 0", borderRadius: 8, border: "1px solid #333", background: k === "✓" ? "#E8500A" : "#222", color: "#fff", fontSize: 16, cursor: "pointer", fontWeight: 500 }}>{k}</button>
-          ))}
-        </div>
-        <div style={{ textAlign: "center", letterSpacing: 8, fontSize: 20, marginBottom: 4, color: "#E8500A" }}>{"●".repeat(pinInput.length)}{"○".repeat(4 - pinInput.length)}</div>
-        {pinError && <div style={{ color: C.danger, fontSize: 12, textAlign: "center" }}>{pinError}</div>}
       </div>
-    </div>
-  );
+    );
+  }
 
   const tabs = [
     { id: "dashboard", label: "📊 Dashboard", mgr: true },
