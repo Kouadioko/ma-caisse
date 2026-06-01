@@ -143,11 +143,10 @@ export default function App() {
     })();
   }, []);
 
-  const persistAll = (overrides = {}) => {
+ const persistAll = useCallback((overrides = {}) => {
     const data = { products, categories, staff, tables, transactions, tableOrders, ...overrides };
     cloudSave(data);
-    notify("💾 Sauvegardé", "info");
-  };
+}, [products, categories, staff, tables, transactions, tableOrders]);
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
 
