@@ -272,10 +272,12 @@ export default function App() {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 8 }}>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "✓"].map(k => (
-            <button key={k} onClick={() => {
+            <button key={k} type="button" onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (k === "⌫") setPinInput(p => p.slice(0, -1));
               else if (k === "✓") handleLogin();
-              else if (pinInput.length < 4) setPinInput(p => p + k);
+              else if (pinInput.length < 4) setPinInput(p => p + String(k));
             }} style={{ padding: "11px 0", borderRadius: 8, border: "1px solid #333", background: k === "✓" ? "#E8500A" : "#222", color: "#fff", fontSize: 16, cursor: "pointer", fontWeight: 500 }}>{k}</button>
           ))}
         </div>
