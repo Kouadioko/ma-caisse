@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDn0DCRyFiQUvYRamd-MCqvTbAAAgEK6hI",
@@ -12,15 +13,24 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+
+export async function loginWithEmail(email, password) {
+  return signInWithEmailAndPassword(auth, email, password);
+}
+
+export async function logout() {
+  return signOut(auth);
+}
+
+export function onAuthChange(callback) {
+  return onAuthStateChanged(auth, callback);
+}
 
 const RESTAURANT_ID = "montmorency";
 
 export async function saveData(data) {
-  try {
-    await setDoc(doc(db, "restaurants", RESTAURANT_ID), data);
-  } catch (err) {
-    console.error("Erreur Firebase :", err);
-  }
+  await setDoc(doc(db, "restaurants", RESTAURANT_ID), data);
 }
 
 export async function loadData() {

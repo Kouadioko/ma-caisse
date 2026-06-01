@@ -1,5 +1,5 @@
-import { saveData, loadData, listenData } from "./firebase.js";
-import { useState, useEffect, useCallback } from "react";
+import { saveData, loadData, listenData, loginWithEmail, logout, onAuthChange } from "./firebase.js";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const C = {
   primary: "#E8500A", success: "#059669", danger: "#DC2626",
@@ -42,10 +42,15 @@ const DEF_TABLES = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1, name: `Table ${i + 1}`, status: "libre", seats: i < 6 ? 2 : i < 14 ? 4 : 6
 }));
 
-// ── Stockage local (remplacer par Firebase plus tard) ──────────────────────
 const STORAGE_KEY = "caisse_restaurant_data";
+let onSaveError = null;
+let onSaveOk = null;
 
 async function cloudLoad() {
+  try {
+    const remote = await loadData();
+    if (remote) return remote;
+  } catch (e) { console.warn("Firebase load failed:", e); }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -54,6 +59,13 @@ async function cloudLoad() {
 
 async function cloudSave(data) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+  try {
+    await saveData(data);
+    onSaveOk?.();
+  } catch (err) {
+    console.error("Firebase save error:", err.code, err.message);
+    onSaveError?.(err.code || err.message);
+  }
 }
 
 // ── Composants utilitaires ─────────────────────────────────────────────────
@@ -82,6 +94,11 @@ function Notif({ n }) {
 
 // ── Composant principal ────────────────────────────────────────────────────
 export default function App() {
+  const [authUser, setAuthUser] = useState(undefined); // undefined = checking, null = not logged in
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [products, setProducts] = useState(DEF_PRODUCTS);
   const [categories, setCategories] = useState(DEF_CATEGORIES);
@@ -90,6 +107,9 @@ export default function App() {
   const [transactions, setTransactions] = useState([]);
   const [tableOrders, setTableOrders] = useState({});
 
+  const stateRef = useRef({});
+  stateRef.current = { products, categories, staff, tables, transactions, tableOrders };
+
   const [screen, setScreen] = useState("login");
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -97,6 +117,7 @@ export default function App() {
   const [pinError, setPinError] = useState("");
   const [activeTab, setActiveTab] = useState("caisse");
   const [notif, setNotif] = useState(null);
+  const [fbStatus, setFbStatus] = useState("...");
 
   const [cart, setCart] = useState([]);
   const [activeTable, setActiveTable] = useState(null);
@@ -130,24 +151,39 @@ export default function App() {
   };
 
   useEffect(() => {
-    (async () => {
-      const data = await cloudLoad();
-      if (data) {
-        if (data.products) setProducts(data.products);
-        if (data.categories) setCategories(data.categories);
-        if (data.staff) setStaff(data.staff);
-        if (data.tables) setTables(data.tables);
-        if (data.transactions) setTransactions(data.transactions);
-        if (data.tableOrders) setTableOrders(data.tableOrders);
-      }
-      setLoaded(true);
-    })();
+    onSaveOk = () => setFbStatus("OK");
+    onSaveError = (code) => { setFbStatus("ERR:" + code); notify("Firebase : " + code, "danger"); };
+    return () => { onSaveOk = null; onSaveError = null; };
   }, []);
 
- const persistAll = useCallback((overrides = {}) => {
-    const data = { products, categories, staff, tables, transactions, tableOrders, ...overrides };
-    cloudSave(data);
-}, [products, categories, staff, tables, transactions, tableOrders]);
+  useEffect(() => {
+    const unsub = onAuthChange((user) => setAuthUser(user));
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const applyData = (data) => {
+      if (data.products) setProducts(data.products);
+      if (data.categories) setCategories(data.categories);
+      if (data.staff) setStaff(data.staff);
+      if (data.tables) setTables(data.tables);
+      if (data.transactions) setTransactions(data.transactions);
+      if (data.tableOrders) setTableOrders(data.tableOrders);
+    };
+
+    (async () => {
+      const data = await cloudLoad();
+      if (data) applyData(data);
+      setLoaded(true);
+    })();
+
+    const unsub = listenData((data) => applyData(data));
+    return () => unsub();
+  }, []);
+
+  const persistAll = useCallback((overrides = {}) => {
+    cloudSave({ ...stateRef.current, ...overrides });
+  }, []);
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
 
@@ -239,6 +275,79 @@ export default function App() {
       <script>window.print();window.close();<\/script></body></html>`);
     win.document.close();
   };
+
+  // ── Vérification Auth Firebase ───────────────────────────────────────────
+  if (authUser === undefined) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui", color: C.muted, background: "#111" }}>
+      <div style={{ color: "#E8500A", fontSize: 14 }}>Vérification…</div>
+    </div>
+  );
+
+  // ── Écran de connexion Firebase Auth ─────────────────────────────────────
+  if (!authUser) {
+    const handleAuth = async (e) => {
+      e.preventDefault();
+      setAuthError("");
+      setAuthLoading(true);
+      try {
+        await loginWithEmail(authEmail, authPassword);
+      } catch (err) {
+        const msg = err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found"
+          ? "Email ou mot de passe incorrect"
+          : err.code === "auth/invalid-email"
+          ? "Adresse email invalide"
+          : err.code === "auth/too-many-requests"
+          ? "Trop de tentatives, réessayez plus tard"
+          : "Erreur de connexion";
+        setAuthError(msg);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    return (
+      <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui", padding: 16 }}>
+        <div style={{ background: "#1A1A1A", borderRadius: 16, padding: 28, width: 320, maxWidth: "100%", border: "1px solid #E8500A30" }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <svg width="64" height="70" viewBox="0 0 200 220" style={{ marginBottom: 8 }}>
+              <polygon points="100,8 192,110 8,110" fill="none" stroke="#E8500A" strokeWidth="3" />
+              <g fill="none" stroke="#E8500A" strokeWidth="2.2">
+                <ellipse cx="105" cy="72" rx="38" ry="22" />
+                <path d="M68,82 Q60,95 62,100" /><path d="M82,90 Q78,104 80,108" />
+                <path d="M128,90 Q132,104 130,108" /><path d="M142,82 Q150,95 148,100" />
+                <path d="M143,65 Q155,58 152,75" />
+              </g>
+            </svg>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#E8500A", letterSpacing: 2 }}>LE MONTMORENCY</div>
+            <div style={{ fontSize: 11, color: "#ffffff40", marginTop: 4 }}>Accès sécurisé</div>
+          </div>
+          <form onSubmit={handleAuth}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: "#ffffff60", marginBottom: 6 }}>Email</div>
+              <input
+                type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)}
+                placeholder="votre@email.com" required autoComplete="email"
+                style={{ width: "100%", background: "#222", border: "1px solid #333", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: "#ffffff60", marginBottom: 6 }}>Mot de passe</div>
+              <input
+                type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)}
+                placeholder="••••••••" required autoComplete="current-password"
+                style={{ width: "100%", background: "#222", border: "1px solid #333", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+              />
+            </div>
+            {authError && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 12, textAlign: "center" }}>{authError}</div>}
+            <button type="submit" disabled={authLoading}
+              style={{ width: "100%", background: authLoading ? "#555" : "#E8500A", color: "#fff", border: "none", borderRadius: 8, padding: "11px 0", fontSize: 14, fontWeight: 600, cursor: authLoading ? "not-allowed" : "pointer" }}>
+              {authLoading ? "Connexion…" : "Se connecter"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (!loaded) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui", color: C.muted }}>Chargement… 🍽️</div>;
 
@@ -335,9 +444,14 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 10, color: fbStatus === "OK" ? "#4ade80" : fbStatus.startsWith("ERR") ? "#f87171" : "#ffffff60" }}>
+            {fbStatus === "OK" ? "● Firebase OK" : fbStatus.startsWith("ERR") ? "● " + fbStatus : "● sync..."}
+          </span>
           <span style={{ fontSize: 12, opacity: 0.85 }}>{currentUser?.name} · {currentUser?.role}</span>
           <button onClick={() => { setCurrentUser(null); setScreen("login"); setCart([]); setSelectedStaff(null); setActiveTable(null); }}
             style={{ ...s.btnO("#fff"), borderColor: "#ffffff30", padding: "5px 10px", fontSize: 12 }}>Déco</button>
+          <button onClick={() => { logout(); setCurrentUser(null); setScreen("login"); setCart([]); }}
+            style={{ ...s.btnO("#f87171"), borderColor: "#f8717140", padding: "5px 10px", fontSize: 12 }}>Quitter</button>
         </div>
       </div>
 
@@ -706,10 +820,10 @@ export default function App() {
             <button onClick={() => setStaffModal(false)} style={{ ...s.btnO(), flex: 1 }}>Annuler</button>
             <button onClick={() => {
               if (!newStaff.name || newStaff.pin.length !== 4) { notify("PIN 4 chiffres requis", "danger"); return; }
-const newMember = {...newStaff, id: Date.now()};
-const n = [...staff, newMember];
+const newMember = { ...newStaff, id: Date.now() };
+const n = [...stateRef.current.staff, newMember];
 setStaff(n);
-cloudSave({ products, categories, staff: n, tables, transactions, tableOrders });
+cloudSave({ ...stateRef.current, staff: n });
 notify("Employé ajouté !");
 setStaffModal(false);
               
