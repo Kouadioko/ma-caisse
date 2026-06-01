@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { saveData, loadData, listenData } from "./firebase.js";
 
 const C = {
   primary: "#E8500A", success: "#059669", danger: "#DC2626",
@@ -705,7 +705,13 @@ export default function App() {
             <button onClick={() => setStaffModal(false)} style={{ ...s.btnO(), flex: 1 }}>Annuler</button>
             <button onClick={() => {
               if (!newStaff.name || newStaff.pin.length !== 4) { notify("PIN 4 chiffres requis", "danger"); return; }
-              const n = [...staff, { ...newStaff, id: Date.now() }]; setStaff(n); persistAll({ staff: n }); setStaffModal(false); notify("Employé ajouté !");
+const newMember = {...newStaff, id: Date.now()};
+const n = [...staff, newMember];
+setStaff(n);
+cloudSave({ products, categories, staff: n, tables, transactions, tableOrders });
+notify("Employé ajouté !");
+setStaffModal(false);
+              
             }} style={{ ...s.btn(), flex: 2 }}>Ajouter</button>
           </div>
         </Modal>
