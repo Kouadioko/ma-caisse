@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { saveData, loadData, listenData } from "./firebase.js";
 
 const C = {
   primary: "#E8500A", success: "#059669", danger: "#DC2626",
@@ -42,17 +43,12 @@ const DEF_TABLES = Array.from({ length: 20 }, (_, i) => ({
 }));
 
 // ── Stockage local (remplacer par Firebase plus tard) ──────────────────────
-const STORAGE_KEY = "caisse_restaurant_data";
-
 async function cloudLoad() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+  return await loadData();
 }
 
 async function cloudSave(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+  await saveData(data);
 }
 
 // ── Composants utilitaires ─────────────────────────────────────────────────
