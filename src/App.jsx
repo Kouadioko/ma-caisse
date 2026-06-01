@@ -492,7 +492,7 @@ export default function App() {
                         <div style={{ fontSize: 11, color: C.muted }}>TVA {p.tva}% · Stock: {p.stock}</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontWeight: 600, color: C.primary }}>{p.price.toFixed(2)} €</span>
+                        <span style={{ fontWeight: 600, color: C.primary }}>{Math.round(p.price).toLocaleString()} FCFA</span>
                         <button onClick={() => { setEditProd({ ...p, price: p.price.toString(), stock: p.stock.toString() }); setProdModal(p); }} style={s.btnO()}>Modifier</button>
                         <button onClick={() => { setProducts(prev => prev.filter(pr => pr.id !== p.id)); notify("Produit supprimé"); }} style={s.btn(C.danger, "6px 9px")}>✕</button>
                       </div>
