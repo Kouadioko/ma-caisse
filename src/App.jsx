@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { saveData, loadData, listenData } from "./firebase.js";
 
 const C = {
   primary: "#E8500A", success: "#059669", danger: "#DC2626",
@@ -43,12 +42,17 @@ const DEF_TABLES = Array.from({ length: 20 }, (_, i) => ({
 }));
 
 // ── Stockage local (remplacer par Firebase plus tard) ──────────────────────
+const STORAGE_KEY = "caisse_restaurant_data";
+
 async function cloudLoad() {
-  return await loadData();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }
 
 async function cloudSave(data) {
-  await saveData(data);
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
 }
 
 // ── Composants utilitaires ─────────────────────────────────────────────────
@@ -356,8 +360,8 @@ export default function App() {
             <div>
               <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Vue d'ensemble</div>
               <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                <div style={s.metric(C.primary)}><div style={{ fontSize: 11, color: C.muted }}>CA aujourd'hui</div><div style={{ fontSize: 21, fontWeight: 700, color: C.primary }}>{todayCA.toFixed(2)} €</div><div style={{ fontSize: 11, color: C.muted }}>{today.length} ventes</div></div>
-                <div style={s.metric(C.success)}><div style={{ fontSize: 11, color: C.muted }}>CA ce mois</div><div style={{ fontSize: 21, fontWeight: 700, color: C.success }}>{monthCA.toFixed(2)} €</div></div>
+                <div style={s.metric(C.primary)}><div style={{ fontSize: 11, color: C.muted }}>CA aujourd'hui</div><div style={{ fontSize: 21, fontWeight: 700, color: C.primary }}>{Math.round(todayCA).toLocaleString()} FCFA</div><div style={{ fontSize: 11, color: C.muted }}>{today.length} ventes</div></div>
+                <div style={s.metric(C.success)}><div style={{ fontSize: 11, color: C.muted }}>CA ce mois</div><div style={{ fontSize: 21, fontWeight: 700, color: C.success }}>{Math.round(monthCA).toLocaleString()} FCFA</div></div>
                 <div style={s.metric(C.info)}><div style={{ fontSize: 11, color: C.muted }}>Tables occupées</div><div style={{ fontSize: 21, fontWeight: 700, color: C.info }}>{tables.filter(t => t.status === "occupée").length}/{tables.length}</div></div>
                 <div style={s.metric(C.warning)}><div style={{ fontSize: 11, color: C.muted }}>Stock faible</div><div style={{ fontSize: 21, fontWeight: 700, color: C.warning }}>{lowStock.length}</div></div>
               </div>
@@ -426,7 +430,7 @@ export default function App() {
                       <div style={{ fontSize: 10, color: C.muted }}>{p.cat}</div>
                       <div style={{ fontWeight: 500, fontSize: 13, margin: "2px 0 4px" }}>{p.name}</div>
                       {p.desc && <div style={{ fontSize: 10, color: C.muted, marginBottom: 4 }}>{p.desc}</div>}
-                      <div style={s.row()}><span style={{ fontWeight: 600, color: C.primary }}>{p.price.toFixed(2)} €</span><span style={{ fontSize: 10, color: p.stock <= 5 ? C.warning : C.muted }}>{p.stock}</span></div>
+                      <div style={s.row()}><span style={{ fontWeight: 600, color: C.primary }}>{Math.round(p.price).toLocaleString()} FCFA</span><span style={{ fontSize: 10, color: p.stock <= 5 ? C.warning : C.muted }}>{p.stock}</span></div>
                     </div>
                   ))}
                 </div>
@@ -444,13 +448,13 @@ export default function App() {
                           <button onClick={() => updateQty(it.id, 1)} style={{ width: 22, height: 22, border: `1px solid ${C.border}`, borderRadius: 4, cursor: "pointer", background: "#fff" }}>+</button>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontSize: 13, fontWeight: 500 }}>{(it.price * it.qty).toFixed(2)} €</span>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{(Math.round(it.price) * it.qty).toLocaleString()} FCFA</span>
                           <button onClick={() => removeFromCart(it.id)} style={{ color: C.danger, background: "none", border: "none", cursor: "pointer" }}>✕</button>
                         </div>
                       </div>
                     </div>
                   ))}
-                  <div style={{ ...s.row(), padding: "8px 0 6px", fontWeight: 600, fontSize: 15 }}><span>Total</span><span style={{ color: C.primary }}>{cartTotal.toFixed(2)} €</span></div>
+                  <div style={{ ...s.row(), padding: "8px 0 6px", fontWeight: 600, fontSize: 15 }}><span>Total</span><span style={{ color: C.primary }}>{Math.round(cartTotal).toLocaleString()} FCFA</span></div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => setCart([])} style={{ ...s.btnO(), flex: 1, fontSize: 12 }}>Vider</button>
                     <button onClick={() => setPayModal(true)} style={{ ...s.btn(C.success), flex: 2 }}>Encaisser</button>
@@ -540,9 +544,9 @@ export default function App() {
                 </>}
               </div>
               <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                <div style={s.metric(C.primary)}><div style={{ fontSize: 11, color: C.muted }}>CA total</div><div style={{ fontSize: 22, fontWeight: 700, color: C.primary }}>{totalCA.toFixed(2)} €</div></div>
+                <div style={s.metric(C.primary)}><div style={{ fontSize: 11, color: C.muted }}>CA total</div><div style={{ fontSize: 22, fontWeight: 700, color: C.primary }}>{Math.round(totalCA).toLocaleString()} FCFA</div></div>
                 <div style={s.metric(C.success)}><div style={{ fontSize: 11, color: C.muted }}>Transactions</div><div style={{ fontSize: 22, fontWeight: 700, color: C.success }}>{txList.length}</div></div>
-                <div style={s.metric(C.info)}><div style={{ fontSize: 11, color: C.muted }}>Panier moyen</div><div style={{ fontSize: 22, fontWeight: 700, color: C.info }}>{txList.length > 0 ? (totalCA / txList.length).toFixed(2) : 0} €</div></div>
+                <div style={s.metric(C.info)}><div style={{ fontSize: 11, color: C.muted }}>Panier moyen</div><div style={{ fontSize: 22, fontWeight: 700, color: C.info }}>{txList.length > 0 ? Math.round(totalCA / txList.length).toLocaleString() : 0} FCFA</div></div>
               </div>
               <div style={s.card}>
                 <div style={{ fontWeight: 500, marginBottom: 8 }}>Top produits</div>
@@ -566,7 +570,7 @@ export default function App() {
                 <div style={s.row()}>
                   <div><div style={{ fontSize: 13 }}>{t.date}{t.table ? ` · ${t.table}` : ""}</div><div style={{ fontSize: 11, color: C.muted }}>{t.cashier} · {t.method} · {t.items.length} article(s)</div></div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontWeight: 600, color: C.success }}>{t.total.toFixed(2)} €</span>
+                    <div style={{ fontWeight: 600, color: C.success }}>{Math.round(t.total).toLocaleString()} FCFA</div>
                     <button onClick={e => { e.stopPropagation(); printTicket(t); }} style={s.btn(C.info, "5px 9px")}>🖨️</button>
                   </div>
                 </div>
@@ -601,7 +605,7 @@ export default function App() {
       {/* MODALS */}
       {payModal && (
         <Modal title="💳 Encaissement" onClose={() => setPayModal(false)} width={310}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: C.primary, textAlign: "center", marginBottom: 14 }}>{cartTotal.toFixed(2)} €</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: C.primary, textAlign: "center", marginBottom: 14 }}>{Math.round(cartTotal).toLocaleString()} FCFA</div>
           {activeTable && <div style={{ textAlign: "center", fontSize: 13, color: C.muted, marginBottom: 10 }}>Table {activeTable}</div>}
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Mode de paiement</div>
@@ -612,7 +616,7 @@ export default function App() {
           {payMethod === "espèces" && <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Montant remis</div>
             <input type="number" style={s.inp()} value={cashGiven} onChange={e => setCashGiven(e.target.value)} placeholder="0.00" />
-            {cashGiven && parseFloat(cashGiven) >= cartTotal && <div style={{ marginTop: 6, color: C.success, fontSize: 13, fontWeight: 500 }}>Rendu: {(parseFloat(cashGiven) - cartTotal).toFixed(2)} €</div>}
+            {cashGiven && parseFloat(cashGiven) >= cartTotal && <div style={{ marginTop: 6, color: C.success, fontSize: 13, fontWeight: 500 }}>Rendu: {Math.round(parseFloat(cashGiven) - cartTotal).toLocaleString()} FCFA</div>}
           </div>}
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setPayModal(false)} style={{ ...s.btnO(), flex: 1 }}>Annuler</button>
@@ -634,8 +638,8 @@ export default function App() {
             <div style={{ borderTop: "1px dashed #ccc", borderBottom: "1px dashed #ccc", padding: "8px 0", margin: "8px 0" }}>
               {ticketModal.items.map((it, i) => <div key={i} style={s.row()}><span>{it.qty}x {it.name}</span><span>{(it.price * it.qty).toFixed(2)} €</span></div>)}
             </div>
-            <div style={{ ...s.row(), fontWeight: 700, fontSize: 15, marginBottom: 4 }}><span>TOTAL</span><span>{ticketModal.total.toFixed(2)} €</span></div>
-            <div style={{ color: C.muted, marginBottom: 12, fontSize: 12 }}>Paiement: {ticketModal.method}{ticketModal.change > 0 ? ` · Rendu: ${ticketModal.change.toFixed(2)} €` : ""}</div>
+                          <div style={{ ...s.row(), fontWeight: 700, fontSize: 15, marginBottom: 4 }}><span>TOTAL</span><span>{Math.round(ticketModal.total).toLocaleString()} FCFA</span></div>
+            <div style={{ color: C.muted, marginBottom: 12, fontSize: 12 }}>Paiement: {ticketModal.method}{ticketModal.change > 0 ? ` · Rendu: ${Math.round(ticketModal.change).toLocaleString()} FCFA` : ""}</div>
             <div style={{ textAlign: "center", color: C.muted, marginBottom: 14 }}>Merci de votre visite !</div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setTicketModal(null)} style={{ ...s.btnO(), flex: 1 }}>Fermer</button>
