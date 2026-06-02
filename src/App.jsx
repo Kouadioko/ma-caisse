@@ -20,18 +20,18 @@ const s = {
 
 const DEF_CATEGORIES = ["Boissons", "Plats", "Desserts", "Entrées", "Snacks", "Formules"];
 const DEF_PRODUCTS = [
-  { id: 1, name: "Café", cat: "Boissons", price: 2.5, tva: 10, stock: 50, desc: "Expresso maison" },
-  { id: 2, name: "Thé", cat: "Boissons", price: 2.0, tva: 10, stock: 40, desc: "" },
-  { id: 3, name: "Jus d'orange", cat: "Boissons", price: 3.5, tva: 10, stock: 30, desc: "Pressé frais" },
-  { id: 4, name: "Eau minérale", cat: "Boissons", price: 1.5, tva: 5.5, stock: 60, desc: "" },
-  { id: 5, name: "Coca-Cola", cat: "Boissons", price: 3.0, tva: 10, stock: 45, desc: "33cl" },
-  { id: 6, name: "Croque-monsieur", cat: "Plats", price: 7.5, tva: 10, stock: 20, desc: "" },
-  { id: 7, name: "Salade César", cat: "Plats", price: 11.0, tva: 10, stock: 15, desc: "" },
-  { id: 8, name: "Burger maison", cat: "Plats", price: 13.5, tva: 10, stock: 10, desc: "Bœuf 180g" },
-  { id: 9, name: "Quiche lorraine", cat: "Plats", price: 9.0, tva: 10, stock: 8, desc: "" },
-  { id: 10, name: "Fondant chocolat", cat: "Desserts", price: 5.5, tva: 10, stock: 12, desc: "" },
-  { id: 11, name: "Tarte citron", cat: "Desserts", price: 4.5, tva: 10, stock: 10, desc: "" },
-  { id: 12, name: "Formule Déj", cat: "Formules", price: 15.0, tva: 10, stock: 20, desc: "Plat + dessert + café" },
+  { id: 1, name: "Café", cat: "Boissons", price: 500, stock: 50, desc: "Expresso maison" },
+  { id: 2, name: "Thé", cat: "Boissons", price: 500, stock: 40, desc: "" },
+  { id: 3, name: "Jus d'orange", cat: "Boissons", price: 1000, stock: 30, desc: "Pressé frais" },
+  { id: 4, name: "Eau minérale", cat: "Boissons", price: 500, stock: 60, desc: "" },
+  { id: 5, name: "Coca-Cola", cat: "Boissons", price: 1000, stock: 45, desc: "33cl" },
+  { id: 6, name: "Croque-monsieur", cat: "Plats", price: 2500, stock: 20, desc: "" },
+  { id: 7, name: "Salade César", cat: "Plats", price: 3500, stock: 15, desc: "" },
+  { id: 8, name: "Burger maison", cat: "Plats", price: 4500, stock: 10, desc: "Bœuf 180g" },
+  { id: 9, name: "Quiche lorraine", cat: "Plats", price: 3000, stock: 8, desc: "" },
+  { id: 10, name: "Fondant chocolat", cat: "Desserts", price: 1500, stock: 12, desc: "" },
+  { id: 11, name: "Tarte citron", cat: "Desserts", price: 1500, stock: 10, desc: "" },
+  { id: 12, name: "Formule Déj", cat: "Formules", price: 5000, stock: 20, desc: "Plat + dessert + café" },
 ];
 const OWNER_EMAIL = "cekouadio@yahoo.fr";
 
@@ -277,10 +277,10 @@ export default function App() {
     win.document.write(`<html><head><title>Ticket</title><style>body{font-family:monospace;font-size:13px;padding:16px;max-width:300px;margin:auto}h2,p{margin:4px 0;text-align:center}.line{border-top:1px dashed #999;margin:8px 0}.row{display:flex;justify-content:space-between}strong{font-size:15px}</style></head><body>
       <h2>🍽️ LE MONTMORENCY</h2><p>bistro ivoirien · Abidjan</p><p>${ticket.date}</p><p>Caissier: ${ticket.cashier}</p>${ticket.table ? `<p>${ticket.table}</p>` : ""}
       <div class="line"></div>
-      ${ticket.items.map(i => `<div class="row"><span>${i.qty}x ${i.name}</span><span>${(i.price * i.qty).toFixed(2)} €</span></div>`).join("")}
+      ${ticket.items.map(i => `<div class="row"><span>${i.qty}x ${i.name}</span><span>${Math.round(i.price * i.qty).toLocaleString()} FCFA</span></div>`).join("")}
       <div class="line"></div>
-      <div class="row"><strong>TOTAL</strong><strong>${ticket.total.toFixed(2)} €</strong></div>
-      <p>Paiement: ${ticket.method}${ticket.change > 0 ? ` | Rendu: ${ticket.change.toFixed(2)} €` : ""}</p>
+      <div class="row"><strong>TOTAL</strong><strong>${Math.round(ticket.total).toLocaleString()} FCFA</strong></div>
+      <p>Paiement: ${ticket.method}${ticket.change > 0 ? ` | Rendu: ${Math.round(ticket.change).toLocaleString()} FCFA` : ""}</p>
       <div class="line"></div><p>Merci de votre visite !</p>
       <script>window.print();window.close();<\/script></body></html>`);
     win.document.close();
@@ -501,7 +501,7 @@ export default function App() {
               </div>}
               <div style={s.card}>
                 <div style={{ fontWeight: 500, marginBottom: 8 }}>📋 Dernières transactions</div>
-                {transactions.slice(0, 5).map(t => <div key={t.id} style={{ ...s.row(), padding: "5px 0", borderBottom: `1px solid ${C.border}` }}><div><div style={{ fontSize: 13 }}>{t.date}</div><div style={{ fontSize: 11, color: C.muted }}>{t.cashier}{t.table ? ` · ${t.table}` : ""} · {t.method}</div></div><span style={{ fontWeight: 600, color: C.success }}>{t.total.toFixed(2)} €</span></div>)}
+                {transactions.slice(0, 5).map(t => <div key={t.id} style={{ ...s.row(), padding: "5px 0", borderBottom: `1px solid ${C.border}` }}><div><div style={{ fontSize: 13 }}>{t.date}</div><div style={{ fontSize: 11, color: C.muted }}>{t.cashier}{t.table ? ` · ${t.table}` : ""} · {t.method}</div></div><span style={{ fontWeight: 600, color: C.success }}>{Math.round(t.total).toLocaleString()} FCFA</span></div>)}
                 {transactions.length === 0 && <div style={{ color: C.muted, fontSize: 13 }}>Aucune transaction</div>}
               </div>
             </div>
@@ -529,7 +529,7 @@ export default function App() {
                       {currentUser?.role === "manager" && <button onClick={() => { setEditTable(t); setNewTableName(t.name); setNewTableSeats(t.seats); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: C.muted }}>✏️</button>}
                     </div>
                     <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>{t.seats} places · <span style={{ color: t.status === "libre" ? C.success : C.warning, fontWeight: 500 }}>{t.status}</span></div>
-                    {items.length > 0 && <div style={{ fontSize: 12, marginBottom: 6, color: C.warning, fontWeight: 500 }}>{items.length} article(s) · {total.toFixed(2)} €</div>}
+                    {items.length > 0 && <div style={{ fontSize: 12, marginBottom: 6, color: C.warning, fontWeight: 500 }}>{items.length} article(s) · {Math.round(total).toLocaleString()} FCFA</div>}
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                       <button onClick={() => { setActiveTable(t.id); setActiveTab("caisse"); }} style={s.btn(C.primary, "5px 8px")}>+ Commande</button>
                       {items.length > 0 && <button onClick={() => encaisserTable(t.id)} style={s.btn(C.success, "5px 8px")}>Encaisser</button>}
@@ -602,7 +602,7 @@ export default function App() {
               <div style={{ fontWeight: 600, fontSize: 15 }}>Gestion du menu</div>
               <div style={{ display: "flex", gap: 6 }}>
                 <button onClick={() => setCatModal(true)} style={s.btnO()}>+ Catégorie</button>
-                <button onClick={() => { setEditProd({ name: "", cat: categories[0] || "Plats", price: "", tva: 10, stock: "", desc: "" }); setProdModal("new"); }} style={s.btn()}>+ Produit</button>
+                <button onClick={() => { setEditProd({ name: "", cat: categories[0] || "Plats", price: "", stock: "", desc: "" }); setProdModal("new"); }} style={s.btn()}>+ Produit</button>
               </div>
             </div>
             {categories.map(cat => {
@@ -619,7 +619,7 @@ export default function App() {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 500 }}>{p.name}</div>
                         {p.desc && <div style={{ fontSize: 11, color: C.muted }}>{p.desc}</div>}
-                        <div style={{ fontSize: 11, color: C.muted }}>TVA {p.tva}% · Stock: {p.stock}</div>
+                        <div style={{ fontSize: 11, color: C.muted }}>Stock: {p.stock}</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontWeight: 600, color: C.primary }}>{Math.round(p.price).toLocaleString()} FCFA</span>
@@ -767,7 +767,7 @@ export default function App() {
               <div style={{ color: C.muted }}>Caissier: {ticketModal.cashier}</div>
             </div>
             <div style={{ borderTop: "1px dashed #ccc", borderBottom: "1px dashed #ccc", padding: "8px 0", margin: "8px 0" }}>
-              {ticketModal.items.map((it, i) => <div key={i} style={s.row()}><span>{it.qty}x {it.name}</span><span>{(it.price * it.qty).toFixed(2)} €</span></div>)}
+              {ticketModal.items.map((it, i) => <div key={i} style={s.row()}><span>{it.qty}x {it.name}</span><span>{Math.round(it.price * it.qty).toLocaleString()} FCFA</span></div>)}
             </div>
                           <div style={{ ...s.row(), fontWeight: 700, fontSize: 15, marginBottom: 4 }}><span>TOTAL</span><span>{Math.round(ticketModal.total).toLocaleString()} FCFA</span></div>
             <div style={{ color: C.muted, marginBottom: 12, fontSize: 12 }}>Paiement: {ticketModal.method}{ticketModal.change > 0 ? ` · Rendu: ${Math.round(ticketModal.change).toLocaleString()} FCFA` : ""}</div>
@@ -782,7 +782,7 @@ export default function App() {
 
       {prodModal && (
         <Modal title={prodModal === "new" ? "Nouveau produit" : "Modifier produit"} onClose={() => setProdModal(null)}>
-          {[["Nom", "name", "text"], ["Prix (€)", "price", "number"], ["Stock", "stock", "number"], ["Description", "desc", "text"]].map(([label, key, type]) => (
+          {[["Nom", "name", "text"], ["Prix (FCFA)", "price", "number"], ["Stock", "stock", "number"], ["Description", "desc", "text"]].map(([label, key, type]) => (
             <div key={key} style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>{label}</div>
               <input type={type} style={s.inp()} value={editProd[key] || ""} onChange={e => setEditProd(p => ({ ...p, [key]: e.target.value }))} />
@@ -794,17 +794,11 @@ export default function App() {
               {categories.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>TVA (%)</div>
-            <select style={s.inp()} value={editProd.tva} onChange={e => setEditProd(p => ({ ...p, tva: parseFloat(e.target.value) }))}>
-              {[5.5, 10, 20].map(r => <option key={r}>{r}</option>)}
-            </select>
-          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setProdModal(null)} style={{ ...s.btnO(), flex: 1 }}>Annuler</button>
             <button onClick={() => {
               if (!editProd.name || !editProd.price || !editProd.stock) { notify("Remplissez tous les champs", "danger"); return; }
-              const prod = { ...editProd, price: parseFloat(editProd.price), stock: parseInt(editProd.stock), id: prodModal === "new" ? Date.now() : prodModal.id };
+              const prod = { ...editProd, price: parseInt(editProd.price), stock: parseInt(editProd.stock), id: prodModal === "new" ? Date.now() : prodModal.id };
               const newP = prodModal === "new" ? [...products, prod] : products.map(p => p.id === prod.id ? prod : p);
               setProducts(newP); persistAll({ products: newP }); setProdModal(null); notify(prodModal === "new" ? "Produit ajouté !" : "Produit modifié !");
             }} style={{ ...s.btn(), flex: 2 }}>Enregistrer</button>
