@@ -33,10 +33,13 @@ const DEF_PRODUCTS = [
   { id: 11, name: "Tarte citron", cat: "Desserts", price: 4.5, tva: 10, stock: 10, desc: "" },
   { id: 12, name: "Formule Déj", cat: "Formules", price: 15.0, tva: 10, stock: 20, desc: "Plat + dessert + café" },
 ];
+const OWNER_EMAIL = "cekouadio@yahoo.fr";
+
 const DEF_STAFF = [
-  { id: 1, name: "Marie", pin: "1234", role: "manager" },
-  { id: 2, name: "Thomas", pin: "5678", role: "caissier" },
-  { id: 3, name: "Sophie", pin: "9012", role: "caissier" },
+  { id: 1, name: "Olivier K", pin: "1234", role: "manager" },
+  { id: 2, name: "Marie", pin: "5678", role: "caissier" },
+  { id: 3, name: "Thomas", pin: "9012", role: "caissier" },
+  { id: 4, name: "Sophie", pin: "3456", role: "caissier" },
 ];
 const DEF_TABLES = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1, name: `Table ${i + 1}`, status: "libre", seats: i < 6 ? 2 : i < 14 ? 4 : 6
@@ -194,9 +197,11 @@ export default function App() {
     if (!selectedStaff) { setPinError("Sélectionnez un profil"); return; }
     const user = staff.find(u => u.id === selectedStaff);
     if (user && user.pin === pinInput) {
-      setCurrentUser(user);
+      const isOwner = authUser?.email === OWNER_EMAIL;
+      const effectiveRole = isOwner ? user.role : "caissier";
+      setCurrentUser({ ...user, role: effectiveRole });
       setScreen("app");
-      setActiveTab(user.role === "manager" ? "dashboard" : "tables");
+      setActiveTab(effectiveRole === "manager" ? "dashboard" : "tables");
       setPinInput(""); setPinError("");
     } else { setPinError("PIN incorrect"); setPinInput(""); }
   };
