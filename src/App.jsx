@@ -247,6 +247,7 @@ export default function App() {
     setTransactions(newTx); setProducts(newProds); setTableOrders(newTO); setTables(newTables);
     setCart([]); setPayModal(false); setTicketModal(ticket); setCashGiven(""); setActiveTable(null);
     persistAll({ transactions: newTx, products: newProds, tableOrders: newTO, tables: newTables });
+    setTimeout(() => printTicket(ticket), 200);
   };
 
   const filterTx = () => {
