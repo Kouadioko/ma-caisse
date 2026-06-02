@@ -138,6 +138,8 @@ export default function App() {
 
   const [staffModal, setStaffModal] = useState(false);
   const [newStaff, setNewStaff] = useState({ name: "", pin: "", role: "caissier" });
+  const [editStaff, setEditStaff] = useState(null);
+  const [editStaffForm, setEditStaffForm] = useState({ name: "", pin: "", role: "caissier" });
 
   const [editTable, setEditTable] = useState(null);
   const [newTableName, setNewTableName] = useState("");
@@ -722,6 +724,7 @@ export default function App() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={s.badge(m.role === "manager" ? C.primary : C.success)}>{m.role}</span>
+                  <button onClick={() => { setEditStaff(m); setEditStaffForm({ name: m.name, pin: m.pin, role: m.role }); }} style={s.btnO()}>✏️</button>
                   {m.id !== currentUser?.id && <button onClick={() => { const n = staff.filter(u => u.id !== m.id); setStaff(n); persistAll({ staff: n }); notify("Employé supprimé"); }} style={s.btn(C.danger, "5px 9px")}>✕</button>}
                 </div>
               </div>
@@ -871,6 +874,22 @@ setStaffModal(false);
             const n = tables.filter(t => t.id !== editTable.id);
             setTables(n); persistAll({ tables: n }); setEditTable(null); notify("Table supprimée");
           }} style={{ ...s.btn(C.danger), width: "100%" }}>🗑️ Supprimer cette table</button>
+        </Modal>
+      )}
+
+      {editStaff && (
+        <Modal title={`Modifier — ${editStaff.name}`} onClose={() => setEditStaff(null)} width={280}>
+          <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Nom</div><input style={s.inp()} value={editStaffForm.name} onChange={e => setEditStaffForm(p => ({ ...p, name: e.target.value }))} /></div>
+          <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>PIN (4 chiffres)</div><input style={s.inp()} maxLength={4} value={editStaffForm.pin} onChange={e => setEditStaffForm(p => ({ ...p, pin: e.target.value }))} /></div>
+          <div style={{ marginBottom: 16 }}><div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Rôle</div><select style={s.inp()} value={editStaffForm.role} onChange={e => setEditStaffForm(p => ({ ...p, role: e.target.value }))}><option value="caissier">Caissier</option><option value="manager">Manager</option></select></div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setEditStaff(null)} style={{ ...s.btnO(), flex: 1 }}>Annuler</button>
+            <button onClick={() => {
+              if (!editStaffForm.name || editStaffForm.pin.length !== 4) { notify("PIN 4 chiffres requis", "danger"); return; }
+              const n = staff.map(u => u.id === editStaff.id ? { ...u, ...editStaffForm } : u);
+              setStaff(n); persistAll({ staff: n }); setEditStaff(null); notify("Employé modifié !");
+            }} style={{ ...s.btn(), flex: 2 }}>Enregistrer</button>
+          </div>
         </Modal>
       )}
 
