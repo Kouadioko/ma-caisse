@@ -97,6 +97,7 @@ export default function App() {
   const [authUser, setAuthUser] = useState(undefined); // undefined = checking, null = not logged in
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authShowPwd, setAuthShowPwd] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -334,11 +335,17 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 12, color: "#ffffff60", marginBottom: 6 }}>Mot de passe</div>
-              <input
-                type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)}
-                placeholder="••••••••" required autoComplete="current-password"
-                style={{ width: "100%", background: "#222", border: "1px solid #333", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 14, boxSizing: "border-box", outline: "none" }}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  type={authShowPwd ? "text" : "password"} value={authPassword} onChange={e => setAuthPassword(e.target.value)}
+                  placeholder="••••••••" required autoComplete="current-password"
+                  style={{ width: "100%", background: "#222", border: "1px solid #333", borderRadius: 8, padding: "10px 40px 10px 12px", color: "#fff", fontSize: 14, boxSizing: "border-box", outline: "none" }}
+                />
+                <button type="button" onClick={() => setAuthShowPwd(v => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#ffffff60", fontSize: 16, padding: 0 }}>
+                  {authShowPwd ? "🙈" : "👁️"}
+                </button>
+              </div>
             </div>
             {authError && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 12, textAlign: "center" }}>{authError}</div>}
             <button type="submit" disabled={authLoading}
