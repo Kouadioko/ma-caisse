@@ -162,6 +162,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!authUser) { setLoaded(false); return; }
+
     const applyData = (data) => {
       if (data.products) setProducts(data.products);
       if (data.categories) setCategories(data.categories);
@@ -179,7 +181,7 @@ export default function App() {
 
     const unsub = listenData((data) => applyData(data));
     return () => unsub();
-  }, []);
+  }, [authUser]);
 
   const persistAll = useCallback((overrides = {}) => {
     cloudSave({ ...stateRef.current, ...overrides });
